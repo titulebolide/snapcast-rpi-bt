@@ -7,7 +7,7 @@ This document is using the default `pi` user as an example.
 ## Initial setup of Raspberry Pi OS Lite
 Flash the OS to a SD card with balenaEtcher.
 In order to run it headless (i.e. without any screen), place in the `boot` partition a file called `wpa_supplicant.conf` with the following data:
-```json
+```
 country=FR
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
