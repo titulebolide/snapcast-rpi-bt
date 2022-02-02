@@ -31,7 +31,10 @@ Setup the alsa loopback and make it visible to pulseaudio:
     - `set-default-sink alsa_output.hw_0_0`
 - Change the very last line of `/etc/default/snapclient` to:
     - `SNAPCLIENT_OPTS="--host 127.0.0.1 -s Headphones"`
+- Edit the file `/etc/snapserver.conf` and change the `source` parameter to:
+    - `source = alsa://?name=Snapserver&device=hw:0,1,0`
 
+Reboot.
 
 ### Bluetooth configuration
 The name of the bluetooth device can be changed by changing `/etc/hostname` and `/etc/hosts`.
@@ -87,3 +90,5 @@ The routing of the sound can be sometime quite complicated, it can be debugged w
 
 ## Setting up a Snapcast client
 These are the very same steps given by the snapcast guide to install the client : https://github.com/badaix/snapcast/blob/master/doc/build.md#linux-native
+Afterwards you will just have to edit the file `/etc/default/snapclient` to:
+`SNAPCLIENT_OPTS="--host <HOST_IP> -s Headphones"`
