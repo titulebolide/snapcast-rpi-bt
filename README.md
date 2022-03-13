@@ -22,7 +22,7 @@ In addition to that, place a empty file called `ssh` in the very same partition,
 
 After the first boot, you will be able to access you raspberry pi via ssh:
 ```console
-ssh pi@raspberrypi.lan
+ssh pi@raspberrypi
 ```
 The default password is `raspberry`
 
@@ -41,15 +41,23 @@ network
 
 ### Dependancies
 ```console
-sudo apt-get install pulseaudio pulseaudio-module-bluetooth
+sudo apt update
+sudo apt install pulseaudio pulseaudio-module-bluetooth
+```
+
+Get the `armhf` versions of the snapcast server and clients and install them. For example, for the version 0.26.0 of snapcast:
+```console
+wget https://github.com/badaix/snapcast/releases/download/v0.26.0/snapclient_0.26.0-1_armhf.deb
+wget https://github.com/badaix/snapcast/releases/download/v0.26.0/snapserver_0.26.0-1_armhf.deb
+sudo dpkg -i snapclient_0.26.0-1_armhf.deb
+sudo dpkg -i snapserver_0.26.0-1_armhf.deb
+sudo apt --fix-broken install
 ```
 
 ### General configuration
 Edit `/etc/hostname` and `/etc/hosts` to replace `raspberrypi` by something unique, let's say for example `node_titulebolide`. It will set the DNS name of the server as well as its bluetooth device name.
 
-### Snapcast configuration
-Clone *snapcast* and build it with the guide here : https://github.com/badaix/snapcast/blob/master/doc/build.md#linux-native
-
+### Snapcast configurations
 Setup the alsa loopback and make it visible to pulseaudio:
 - Add the line `snd-aloop` at the end of `/etc/modules`
 - Add the lines in `/etc/pulse/default.pa`
@@ -59,12 +67,35 @@ Setup the alsa loopback and make it visible to pulseaudio:
     - `SNAPCLIENT_OPTS="--host 127.0.0.1 -s Headphones"`
 - Edit the file `/etc/snapserver.conf` and change the `source` parameter to:
     - `source = alsa://?name=Snapserver&device=hw:0,1,0`
+- Change the bluetooth device Class of Service:
+    - `sudo hciconfig hci0 class 0x240408`
+
+Setup pulseaudio service by creating and edition the file `/etc/systemd/system/pulseaudio.service` and writing:
+```systemd
+[Unit]
+Description=PulseAudio Deamon
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+ExecStart=/usr/bin/pulseaudio --realtime --exit-idle-time=-1
+```
+
+Setup the service to be started on boot:
+```console
+sudo systemctl daemon-reload
+sudo systemctl enable pulseaudio
+```
 
 Reboot.
 
-### Bluetooth configuration
+### Bluetooth connection
+Open the `bluetooth` connection manager by running:
 ```console
-sudo hciconfig hci0 class 0x240408
 bluetoothctl
 ```
 
@@ -81,31 +112,15 @@ trust
 exit
 ```
 
-Paste this to a new file named `pulseaudio.service` in `/etc/systemd/system` (using `nano /etc/systemd/system/pulseaudio.service`), as no pulseaudio service is created in Raspbian OS (note : the User=pi is necessary, using the user pulse don't work):
-```systemd
-[Unit]
-Description=PulseAudio Deamon
-
-[Install]
-WantedBy=multi-user.target
-
-[Service]
-Type=simple
-User=pi
-Group=pi
-ExecStart=/usr/bin/pulseaudio --realtime --exit-idle-time=-1
-```
-
-```console
-sudo systemctl daemon-reload
-sudo systemctl enable pulseaudio
-sudo systemctl start pulseaudio
-```
-
 This should be good to go.
 
 ## Setting up a Snapcast client
-These are the very same steps given by the snapcast guide to install the client : https://github.com/badaix/snapcast/blob/master/doc/build.md#linux-native
+Get the `armhf` versions of the snapcast client and install it. For example, for the version 0.26.0 of snapcast:
+```console
+wget https://github.com/badaix/snapcast/releases/download/v0.26.0/snapclient_0.26.0-1_armhf.deb
+sudo dpkg -i snapclient_0.26.0-1_armhf.deb
+sudo apt --fix-broken install
+```
 Afterwards you will just have to edit the file `/etc/default/snapclient` to:
 `SNAPCLIENT_OPTS="--host <HOSTNAME>.lan -s Headphones"`. In our example `<HOSTNAME>` is `node_titulebolide`. `<HOSTNAME>.lan` can be replaced by the server's IP if it is static.
 
